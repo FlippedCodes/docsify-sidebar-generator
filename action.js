@@ -16,7 +16,7 @@ async function runAction() {
     core.info(`Executing command: ${command}`);
 
     // 3. Execute the command and capture output/errors
-    await new Promise<void>((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       exec(command, { cwd: process.cwd() }, (error, stdout, stderr) => {
         // Use cwd to ensure paths are correct
         if (error) {

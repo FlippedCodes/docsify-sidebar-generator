@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises';
 import { parseArgs } from 'util';
 
 const { values, positionals } = parseArgs({
-  args: Bun.argv,
+  args: process.argv,
   options: {
     in: { type: "string", short: 'i', default: './' },
     out: { type: "string", short: 'o', default: './_sidebar.md' },
