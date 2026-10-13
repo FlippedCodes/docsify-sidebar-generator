@@ -1,0 +1,16 @@
+name: 'docsify-sidebar-generator'
+description: Generated a sidebar for Docsify, so it doesn't have to be maintained manually.
+author: 'FlippedCodes'
+inputs:
+  # NEW INPUT: The directory to start the recursive scan from
+  source_directory:
+    description: 'The path to the root folder for recursive traversal.'
+    required: true
+  # NEW INPUT: The path where the final single file should be written
+  output_file_path:
+    description: 'The full path for the resulting output file.'
+    required: true
+runs:
+  using: "oven-sh/setup-bun@v2"
+  run: "bun ci --prod"
+  main: "./index.ts"

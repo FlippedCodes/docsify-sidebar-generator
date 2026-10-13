@@ -1,7 +1,22 @@
 import { readdir } from 'node:fs/promises';
 
+import { parseArgs } from 'util';
+
+const { values, positionals } = parseArgs({
+  args: Bun.argv,
+  options: {
+    in: { type: "string", short: 'i', default: './' },
+    out: { type: "string", short: 'o', default: './_sidebar.md' },
+  },
+  strict: true,
+  allowPositionals: true,
+});
+
+console.log(values);
+// console.log(positionals);
+
 // read all the files in the current directory, recursively
-let fileList = await readdir('./', { recursive: true, withFileTypes: true });
+let fileList = await readdir(values.in, { recursive: true, withFileTypes: true });
 
 // sort everything out that is not needed
 const blackList = ['.', 'node_modules', '_'];
@@ -87,6 +102,7 @@ const everything = await Promise.all(
     })
 );
 
-const suffix = await Bun.file(`_sidebar-suffix.md`);
+const suffix = await Bun.file(`${values.in}/_sidebar-suffix.md`);
 if (suffix.size) everything.push(await suffix.text());
-await Bun.write(`_sidebar.md`, everything.join('\n'));
+await Bun.write(values.out, everything.join('\n'));
+process.exit(0);
