@@ -9,9 +9,7 @@ async function runAction() {
 
     core.info(`Starting action. Source: ${sourceDir}, Output: ${outputPath}`);
 
-    // 2. Construct the command
-    // We pass the inputs as arguments to your index.ts script
-    const command = `bun run index.ts -i "${sourceDir}" -o "${outputPath}"`;
+    const command = `node dist/index.js -i "${sourceDir}" -o "${outputPath}"`;
 
     core.info(`Executing command: ${command}`);
 
