@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { readdir } from "node:fs/promises";
+import { readdir, readFile, exists, writeFile } from "node:fs/promises";
 import { parseArgs } from "util";
 async function runAction(GHActions) {
     try {
@@ -45,10 +45,10 @@ async function runAction(GHActions) {
         const out = await Promise.all(folders.map(async (folder) => {
             // check if there is a readme and update the title of the folder
             const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
-            const folderContentRaw = Bun.file(`${folderPath}/readme.md`);
+            const folderContentRaw = await exists(`${folderPath}/readme.md`);
             const rootIndent = folderPath.split("/").length - 1;
-            const folderContent = folderContentRaw.size
-                ? await folderContentRaw.text()
+            const folderContent = folderContentRaw
+                ? await readFile(`${folderPath}/readme.md`, { encoding: 'utf8' })
                 : null;
             let title = folder.name;
             if (folderContent) {
@@ -76,8 +76,7 @@ async function runAction(GHActions) {
             const finalOut = await Promise.all(subFolderList.map(async (file) => {
                 const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
                 const indent = filePath.split("/").length - 1;
-                const fileContent = Bun.file(filePath);
-                const content = await fileContent.text();
+                const content = await readFile(filePath, { encoding: 'utf8' });
                 let title = file.name.split(".md")[0];
                 if (content.startsWith("# "))
                     title = content.split("# ")[1].split("\n")[0];
@@ -98,14 +97,11 @@ async function runAction(GHActions) {
                 return 1;
             return 0;
         })
-            .map(async (sidebar) => {
-            // await Bun.write(`${sidebar.folder}/_sidebar.md`, sidebar.content);
-            return sidebar.content;
-        }));
-        const suffix = await Bun.file(`${input}/_sidebar-suffix.md`);
-        if (suffix.size)
-            everything.push(await suffix.text());
-        await Bun.write(output, everything.join("\n"));
+            .map(async (sidebar) => sidebar.content));
+        const suffix = await exists(`${input}/_sidebar-suffix.md`);
+        if (suffix)
+            everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
+        await writeFile(output, everything.join("\n"));
         core.info(`✅ Action successful!"`);
     }
     catch (error) {
