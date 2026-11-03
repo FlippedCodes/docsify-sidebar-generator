@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { readdir, readFile, exists, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "util";
 async function runAction(GHActions) {
     try {
@@ -45,11 +45,14 @@ async function runAction(GHActions) {
         const out = await Promise.all(folders.map(async (folder) => {
             // check if there is a readme and update the title of the folder
             const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
-            const folderContentRaw = await exists(`${folderPath}/readme.md`);
             const rootIndent = folderPath.split("/").length - 1;
-            const folderContent = folderContentRaw
-                ? await readFile(`${folderPath}/readme.md`, { encoding: 'utf8' })
-                : null;
+            let folderContent = null;
+            try {
+                folderContent = await readFile(`${folderPath}/readme.md`, {
+                    encoding: "utf8",
+                });
+            }
+            catch (e) { }
             let title = folder.name;
             if (folderContent) {
                 if (folderContent.startsWith("---")) {
@@ -76,7 +79,7 @@ async function runAction(GHActions) {
             const finalOut = await Promise.all(subFolderList.map(async (file) => {
                 const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
                 const indent = filePath.split("/").length - 1;
-                const content = await readFile(filePath, { encoding: 'utf8' });
+                const content = await readFile(filePath, { encoding: "utf8" });
                 let title = file.name.split(".md")[0];
                 if (content.startsWith("# "))
                     title = content.split("# ")[1].split("\n")[0];
@@ -98,9 +101,11 @@ async function runAction(GHActions) {
             return 0;
         })
             .map(async (sidebar) => sidebar.content));
-        const suffix = await exists(`${input}/_sidebar-suffix.md`);
-        if (suffix)
-            everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
+        try {
+            const suffix = await readFile(`${input}/_sidebar-suffix.md`, { encoding: "utf8" });
+            everything.push(suffix);
+        }
+        catch (e) { }
         await writeFile(output, everything.join("\n"));
         core.info(`✅ Action successful!"`);
     }

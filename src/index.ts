@@ -1,12 +1,10 @@
 import * as core from "@actions/core";
 
-import { readdir, readFile, writeFile, stats } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 
 import { parseArgs } from "util";
 
-async function runAction(
-  GHActions: { sourceDir: string; outputPath: string },
-) {
+async function runAction(GHActions: { sourceDir: string; outputPath: string }) {
   try {
     // 1. Log the start of the action
     core.info(`🚀 Starting action...`);
@@ -25,7 +23,10 @@ async function runAction(
     const output = GHActions.outputPath || values.out;
 
     // console.log(positionals);
-    if (!(input && output)) core.setFailed("❌ Action failed during execution. Missing sourceDir or outputPath");
+    if (!(input && output))
+      core.setFailed(
+        "❌ Action failed during execution. Missing sourceDir or outputPath",
+      );
     // read all the files in the current directory, recursively
     let fileList = await readdir(input, {
       recursive: true,
@@ -66,9 +67,11 @@ async function runAction(
         const rootIndent = folderPath.split("/").length - 1;
         let folderContent: string | null = null;
         try {
-          folderContent = await readFile(`${folderPath}/readme.md`, { encoding: 'utf8' });
+          folderContent = await readFile(`${folderPath}/readme.md`, {
+            encoding: "utf8",
+          });
         } catch (e) {}
-        
+
         let title = folder.name;
         if (folderContent) {
           if (folderContent.startsWith("---")) {
@@ -100,7 +103,7 @@ async function runAction(
           subFolderList.map(async (file) => {
             const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
             const indent = filePath.split("/").length - 1;
-            const content = await readFile(filePath, { encoding: 'utf8' });
+            const content = await readFile(filePath, { encoding: "utf8" });
 
             let title = file.name.split(".md")[0];
             if (content.startsWith("# "))
@@ -128,8 +131,8 @@ async function runAction(
     );
 
     try {
-      const suffix = await stats(`${input}/_sidebar-suffix.md`);
-      if (suffix) everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
+      const suffix = await readFile(`${input}/_sidebar-suffix.md`, { encoding: "utf8" });
+      everything.push(suffix);
     } catch (e) {}
     await writeFile(output, everything.join("\n"));
     core.info(`✅ Action successful!"`);
