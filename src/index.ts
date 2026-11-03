@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 
-import { readdir, readFile, exists } from "node:fs/promises";
+import { readdir, readFile, exists, writeFile } from "node:fs/promises";
 
 import { parseArgs } from "util";
 
@@ -123,15 +123,12 @@ async function runAction(
           if (a.folder > b.folder) return 1;
           return 0;
         })
-        .map(async (sidebar) => {
-          // await Bun.write(`${sidebar.folder}/_sidebar.md`, sidebar.content);
-          return sidebar.content;
-        }),
+        .map(async (sidebar) => sidebar.content),
     );
 
     const suffix = await exists(`${input}/_sidebar-suffix.md`);
     if (suffix) everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
-    await Bun.write(output, everything.join("\n"));
+    await writeFile(output, everything.join("\n"));
     core.info(`✅ Action successful!"`);
   } catch (error) {
     core.setFailed(`❌ Action failed during execution. Error: ${error}`);
