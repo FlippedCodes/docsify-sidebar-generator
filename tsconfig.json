@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
+    "lib": ["es2024"],
     "target": "es2024",
     "module": "Preserve",
     "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["bun"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   }
 }
