@@ -107,7 +107,7 @@ async function runAction(GHActions) {
         }
         catch (e) { }
         await writeFile(output, everything.join("\n"));
-        core.info(`✅ Action successful!"`);
+        core.info(`✅ Action successful!`);
     }
     catch (error) {
         core.setFailed(`❌ Action failed during execution. Error: ${error}`);
