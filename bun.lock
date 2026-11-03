@@ -6,11 +6,11 @@
       "name": "anything-computer-docs",
       "dependencies": {
         "@actions/core": "^3.0.1",
-        "@types/node": "^26.6.6",
         "ts-node": "^10.9.2",
       },
       "devDependencies": {
         "@types/bun": "latest",
+        "@types/node": "^26.6.6",
       },
       "peerDependencies": {
         "typescript": "^7.0.2",
