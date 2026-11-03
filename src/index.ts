@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 
-import { readdir, readFile, exists, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile, stats } from "node:fs/promises";
 
 import { parseArgs } from "util";
 
@@ -63,11 +63,12 @@ async function runAction(
       folders.map(async (folder) => {
         // check if there is a readme and update the title of the folder
         const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
-        const folderContentRaw = await exists(`${folderPath}/readme.md`);
         const rootIndent = folderPath.split("/").length - 1;
-        const folderContent = folderContentRaw
-          ? await readFile(`${folderPath}/readme.md`, { encoding: 'utf8' })
-          : null;
+        let folderContent: string | null = null;
+        try {
+          folderContent = await readFile(`${folderPath}/readme.md`, { encoding: 'utf8' });
+        } catch (e) {}
+        
         let title = folder.name;
         if (folderContent) {
           if (folderContent.startsWith("---")) {
@@ -126,8 +127,10 @@ async function runAction(
         .map(async (sidebar) => sidebar.content),
     );
 
-    const suffix = await exists(`${input}/_sidebar-suffix.md`);
-    if (suffix) everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
+    try {
+      const suffix = await stats(`${input}/_sidebar-suffix.md`);
+      if (suffix) everything.push(await readFile(`${input}/_sidebar-suffix.md`, { encoding: 'utf8' }));
+    } catch (e) {}
     await writeFile(output, everything.join("\n"));
     core.info(`✅ Action successful!"`);
   } catch (error) {
