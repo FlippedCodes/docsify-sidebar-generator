@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import { readdir, readFile, writeFile } from "node:fs/promises";
+// import { parseArgs } from "util";
 async function runAction(GHActions) {
     try {
         // 1. Log the start of the action
@@ -35,7 +36,7 @@ async function runAction(GHActions) {
             // check if there is a readme and update the title of the folder
             const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
             const rootIndent = folderPath.split("/").length -
-                (GHActions.sourceDir.split("/").length + 1);
+                GHActions.sourceDir.split("/").length;
             let folderContent = null;
             try {
                 folderContent = await readFile(`${folderPath}/readme.md`, {
@@ -69,7 +70,7 @@ async function runAction(GHActions) {
             const finalOut = await Promise.all(subFolderList.map(async (file) => {
                 const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
                 const indent = filePath.split("/").length -
-                    (GHActions.sourceDir.split("/").length + 1);
+                    GHActions.sourceDir.split("/").length;
                 const content = await readFile(filePath, { encoding: "utf8" });
                 let title = file.name.split(".md")[0];
                 if (content.startsWith("# "))

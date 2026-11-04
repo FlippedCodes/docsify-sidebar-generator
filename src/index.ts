@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
 
-import { parseArgs } from "util";
+// import { parseArgs } from "util";
 
 async function runAction(GHActions: { sourceDir: string; outputPath: string }) {
   try {
@@ -58,7 +58,7 @@ async function runAction(GHActions: { sourceDir: string; outputPath: string }) {
         const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
         const rootIndent =
           folderPath.split("/").length -
-          (GHActions.sourceDir.split("/").length + 1);
+          GHActions.sourceDir.split("/").length;
         let folderContent: string | null = null;
         try {
           folderContent = await readFile(`${folderPath}/readme.md`, {
@@ -98,7 +98,7 @@ async function runAction(GHActions: { sourceDir: string; outputPath: string }) {
             const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
             const indent =
               filePath.split("/").length -
-              (GHActions.sourceDir.split("/").length + 1);
+              GHActions.sourceDir.split("/").length;
             const content = await readFile(filePath, { encoding: "utf8" });
 
             let title = file.name.split(".md")[0];
