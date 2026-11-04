@@ -1,26 +1,11 @@
 import * as core from "@actions/core";
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { parseArgs } from "util";
 async function runAction(GHActions) {
     try {
         // 1. Log the start of the action
         core.info(`🚀 Starting action...`);
-        const { values, positionals } = parseArgs({
-            args: process.argv,
-            options: {
-                in: { type: "string", short: "i", default: "./" },
-                out: { type: "string", short: "o", default: "./_sidebar.md" },
-            },
-            strict: true,
-            allowPositionals: true,
-        });
-        const input = GHActions.sourceDir || values.in;
-        const output = GHActions.outputPath || values.out;
-        // console.log(positionals);
-        if (!(input && output))
-            core.setFailed("❌ Action failed during execution. Missing sourceDir or outputPath");
         // read all the files in the current directory, recursively
-        let fileList = await readdir(input, {
+        let fileList = await readdir(GHActions.sourceDir, {
             recursive: true,
             withFileTypes: true,
         });
@@ -28,8 +13,12 @@ async function runAction(GHActions) {
         const blackList = [".", "node_modules", "_"];
         blackList.forEach((entry) => {
             fileList = fileList
-                .filter((file) => !file.name.toLocaleLowerCase().startsWith(entry))
-                .filter((file) => !file.parentPath.toLocaleLowerCase().startsWith(entry));
+                .filter((file) => !file.name
+                .toLocaleLowerCase()
+                .startsWith(entry.toLocaleLowerCase()))
+                .filter((file) => !file.parentPath
+                .toLocaleLowerCase()
+                .startsWith(`${GHActions.sourceDir.toLocaleLowerCase()}/${entry.toLocaleLowerCase()}`));
         });
         fileList = fileList.filter((file) => file.name.toLocaleLowerCase().endsWith(".md") || file.isDirectory());
         function getFrontMatter(content, search) {
@@ -45,7 +34,8 @@ async function runAction(GHActions) {
         const out = await Promise.all(folders.map(async (folder) => {
             // check if there is a readme and update the title of the folder
             const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
-            const rootIndent = folderPath.split("/").length - 1;
+            const rootIndent = folderPath.split("/").length -
+                (GHActions.sourceDir.split("/").length + 1);
             let folderContent = null;
             try {
                 folderContent = await readFile(`${folderPath}/readme.md`, {
@@ -70,7 +60,7 @@ async function runAction(GHActions) {
             if (folderContent &&
                 folderContent.startsWith("---") &&
                 getFrontMatter(folderContent, "showSidebar") === "true")
-                folderString = `${`  `.repeat(rootIndent)}- [${title}](${folderPath})`;
+                folderString = `${`  `.repeat(rootIndent)}- [${title}](${folderPath.replace(GHActions.sourceDir, "")})`;
             // get all files without readmes
             const subFolderList = fileList.filter((file) => file.isFile() &&
                 file.parentPath === folderPath &&
@@ -78,14 +68,15 @@ async function runAction(GHActions) {
             // try getting Title
             const finalOut = await Promise.all(subFolderList.map(async (file) => {
                 const filePath = `${file.parentPath ? `${file.parentPath}/` : ""}${file.name}`;
-                const indent = filePath.split("/").length - 1;
+                const indent = filePath.split("/").length -
+                    (GHActions.sourceDir.split("/").length + 1);
                 const content = await readFile(filePath, { encoding: "utf8" });
                 let title = file.name.split(".md")[0];
                 if (content.startsWith("# "))
                     title = content.split("# ")[1].split("\n")[0];
                 if (content.startsWith("---"))
                     title = getFrontMatter(content, "title");
-                return `${`  `.repeat(indent)}- [${title}](${filePath})`;
+                return `${`  `.repeat(indent)}- [${title}](${filePath.replace(GHActions.sourceDir, "")})`;
             }));
             return {
                 folder: folderPath,
@@ -102,11 +93,11 @@ async function runAction(GHActions) {
         })
             .map(async (sidebar) => sidebar.content));
         try {
-            const suffix = await readFile(`${input}/_sidebar-suffix.md`, { encoding: "utf8" });
+            const suffix = await readFile(`${GHActions.sourceDir}/_sidebar-suffix.md`, { encoding: "utf8" });
             everything.push(suffix);
         }
         catch (e) { }
-        await writeFile(output, everything.join("\n"));
+        await writeFile(GHActions.outputPath, everything.join("\n"));
         core.info(`✅ Action successful!`);
     }
     catch (error) {
@@ -116,9 +107,29 @@ async function runAction(GHActions) {
 // --- Action Entry Point ---
 // The GitHub Action runner will automatically pass arguments defined in action.yml.
 try {
-    const sourceDir = core.getInput("source_directory", { required: true });
-    const outputPath = core.getInput("output_file_path", { required: true });
-    runAction({ sourceDir, outputPath });
+    // const { values, positionals } = parseArgs({
+    //   args: process.argv,
+    //   options: {
+    //     in: {
+    //       type: "string",
+    //       short: "i",
+    //     },
+    //     out: {
+    //       type: "string",
+    //       short: "o",
+    //     },
+    //   },
+    //   strict: true,
+    //   allowPositionals: true,
+    // });
+    // if (values.in && values.out)
+    //   runAction({ sourceDir: values.in, outputPath: values.out });
+    // else {
+    runAction({
+        sourceDir: core.getInput("source_directory", { required: true }),
+        outputPath: core.getInput("output_file_path", { required: true }),
+    });
+    // }
 }
 catch (error) {
     console.error("Critical failure during action startup:", error);
