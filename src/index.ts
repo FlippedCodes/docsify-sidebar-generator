@@ -50,7 +50,7 @@ try {
   const out = await Promise.all(
     folders.map(async (folder) => {
       // check if there is a readme and update the title of the folder
-      const folderPath = `${folder.parentPath ? `${folder.parentPath}${folder.name}` : folder.name}`;
+      const folderPath = `${folder.parentPath ? `${folder.parentPath}/${folder.name}` : folder.name}`;
       const rootIndent = folderPath.split("/").length - 1;
       let folderContent: string | undefined = undefined;
       try {
