@@ -3,7 +3,6 @@ import * as core from "@actions/core";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 
 try {
-  // 1. Log the start of the action
   core.info(`🚀 Starting action...`);
 
   // read all the files in the current directory, recursively
